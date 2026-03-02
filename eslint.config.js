@@ -17,5 +17,8 @@ export default antfu({
     'pnpm-lock.yaml',
     'package.json',
     'pnpm-workspace.yaml',
+    'README.md',
+    'LICENSE',
+    'tsconfig.json',
   ],
 })
