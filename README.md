@@ -21,6 +21,10 @@
 
 在操作前调用，帮助 AI 了解当前 Git 状态，避免盲目操作。
 
+| 参数            | 类型   | 必填 | 说明                          |
+| --------------- | ------ | ---- | ----------------------------- |
+| `workspacePath` | string | ✅   | 项目根目录路径（建议绝对路径） |
+
 **返回内容：** 当前分支、未提交文件列表、待合并 Checkpoint 数量、最近 5 条提交记录。
 
 ---
@@ -29,9 +33,10 @@
 
 在每一步修改代码**前**调用，创建可回溯的 Checkpoint。
 
-| 参数      | 类型   | 必填 | 说明                   |
-| --------- | ------ | ---- | ---------------------- |
-| `message` | string | ✅   | 简述接下来要修改的内容 |
+| 参数            | 类型   | 必填 | 说明                          |
+| --------------- | ------ | ---- | ----------------------------- |
+| `workspacePath` | string | ✅   | 项目根目录路径（建议绝对路径） |
+| `message`       | string | ✅   | 简述接下来要修改的内容         |
 
 ```
 ✅ 存档成功！记录: 🤖 [AI Checkpoint] 重构登录逻辑 (10:30:00)
@@ -44,9 +49,10 @@
 
 代码修改失败或需要撤销时调用，支持多步回滚。
 
-| 参数    | 类型   | 必填 | 说明                      |
-| ------- | ------ | ---- | ------------------------- |
-| `steps` | number | ❌   | 回滚步数，默认 1，最大 20 |
+| 参数            | 类型   | 必填 | 说明                          |
+| --------------- | ------ | ---- | ----------------------------- |
+| `workspacePath` | string | ✅   | 项目根目录路径（建议绝对路径） |
+| `steps`         | number | ❌   | 回滚步数，默认 1，最大 20      |
 
 ```
 ⏪ 已回滚 2 步！所有相关修改已撤销。
@@ -60,10 +66,11 @@
 
 **建议先用 `preview: true` 确认，再正式执行。**
 
-| 参数      | 类型    | 必填 | 说明                                   |
-| --------- | ------- | ---- | -------------------------------------- |
-| `summary` | string  | ✅   | 正式提交总结，如：`feat: 重构登录模块` |
-| `preview` | boolean | ❌   | `true` 仅预览不执行，默认 `false`      |
+| 参数            | 类型    | 必填 | 说明                                   |
+| --------------- | ------- | ---- | -------------------------------------- |
+| `workspacePath` | string  | ✅   | 项目根目录路径（建议绝对路径）          |
+| `summary`       | string  | ✅   | 正式提交总结，如：`feat: 重构登录模块` |
+| `preview`       | boolean | ❌   | `true` 仅预览不执行，默认 `false`      |
 
 ```
 # preview: true
@@ -94,6 +101,8 @@
 ```
 
 > **前提条件：** 项目目录必须是 Git 仓库（已执行 `git init`）
+>
+> **调用要求：** 每次调用工具都要传 `workspacePath`（项目根目录绝对路径）。
 
 ---
 
@@ -113,10 +122,10 @@
 
 当你为我开发功能或重构代码时，必须严格遵守以下 Git 工作流：
 
-1. **开始任务前：** 调用 `aig_status` 了解当前状态。
-2. **每步修改前：** 主动调用 `aig_save` 进行临时存档。
-3. **代码报错时：** 立即调用 `aig_undo` 回滚。
-4. **任务完成时：** 先调用 `aig_squash(preview:true)` 预览，确认后再调用 `aig_squash(preview:false)` 压缩提交。
+1. **开始任务前：** 调用 `aig_status(workspacePath=...)` 了解当前状态。
+2. **每步修改前：** 主动调用 `aig_save(workspacePath=..., message=...)` 进行临时存档。
+3. **代码报错时：** 立即调用 `aig_undo(workspacePath=..., steps=1)` 回滚。
+4. **任务完成时：** 先调用 `aig_squash(workspacePath=..., preview:true)` 预览，确认后再调用 `aig_squash(workspacePath=..., preview:false)` 压缩提交。
 ```
 
 ---
@@ -125,19 +134,19 @@
 
 ```
 你：帮我把这个 Vue 组件拆成 3 个子组件。
-  → AI: aig_status（了解现状）
-  → AI: aig_save("拆分组件") → 修改代码
+  → AI: aig_status(workspacePath="D:\\code\\your-project")（了解现状）
+  → AI: aig_save(workspacePath="D:\\code\\your-project", message="拆分组件") → 修改代码
 
 你：顺便加一下 TS 类型。
-  → AI: aig_save("增加 TS 类型") → 修改代码
+  → AI: aig_save(workspacePath="D:\\code\\your-project", message="增加 TS 类型") → 修改代码
 
 你：样式用 Tailwind 调一下。
-  → AI: aig_save("调整样式") → 修改代码
+  → AI: aig_save(workspacePath="D:\\code\\your-project", message="调整样式") → 修改代码
 
 你：没问题，收尾吧。
-  → AI: aig_squash(summary="feat: 拆分组件并增加 TS 类型", preview=true)
+  → AI: aig_squash(workspacePath="D:\\code\\your-project", summary="feat: 拆分组件并增加 TS 类型", preview=true)
   ← AI 展示预览，等你确认
-  → AI: aig_squash(summary="feat: 拆分组件并增加 TS 类型", preview=false)
+  → AI: aig_squash(workspacePath="D:\\code\\your-project", summary="feat: 拆分组件并增加 TS 类型", preview=false)
   ← 3 个碎片 Checkpoint 压缩为 1 个整洁 Commit ✨
 ```
 

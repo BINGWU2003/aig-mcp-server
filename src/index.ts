@@ -9,14 +9,14 @@ import { aigSave } from './tools/aig_save.js'
 import { aigSquash } from './tools/aig_squash.js'
 import { aigStatus } from './tools/aig_status.js'
 import { aigUndo } from './tools/aig_undo.js'
-import { assertGitRepo } from './utils/git.js'
+import { assertGitRepo, resolveWorkspacePath } from './utils/git.js'
 
 // 注册所有工具
 const tools: Tool[] = [aigStatus, aigSave, aigUndo, aigSquash]
 const toolMap = new Map(tools.map(t => [t.definition.name, t]))
 
 const server = new Server(
-  { name: 'aig-mcp-server', version: '1.2.0' },
+  { name: 'aig-mcp-server', version: '1.3.0' },
   { capabilities: { tools: {} } },
 )
 
@@ -30,13 +30,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params
 
   try {
-    assertGitRepo()
-
     const tool = toolMap.get(name)
     if (!tool)
       throw new Error(`未知的工具调用: ${name}`)
 
-    return await tool.handler((args ?? {}) as Record<string, unknown>)
+    const toolArgs = (args ?? {}) as Record<string, unknown>
+    const workspacePath = resolveWorkspacePath(toolArgs)
+    assertGitRepo(workspacePath)
+
+    return await tool.handler(toolArgs)
   }
   catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error)

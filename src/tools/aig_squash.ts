@@ -1,5 +1,5 @@
 import type { CallToolResult, Tool } from '../types.js'
-import { git } from '../utils/git.js'
+import { git, resolveWorkspacePath } from '../utils/git.js'
 
 export const aigSquash: Tool = {
   definition: {
@@ -9,6 +9,10 @@ export const aigSquash: Tool = {
     inputSchema: {
       type: 'object',
       properties: {
+        workspacePath: {
+          type: 'string',
+          description: '项目根目录路径（建议绝对路径）',
+        },
         summary: {
           type: 'string',
           description:
@@ -20,26 +24,27 @@ export const aigSquash: Tool = {
             '是否仅预览将被合并的 Checkpoint 列表（不执行实际合并）。默认 false。建议先传 true 确认内容，再传 false 正式执行。',
         },
       },
-      required: ['summary'],
+      required: ['workspacePath', 'summary'],
     },
   },
 
   async handler(args): Promise<CallToolResult> {
+    const workspacePath = resolveWorkspacePath(args)
     const { summary, preview = false } = args as {
       summary: string
       preview?: boolean
     }
 
     // 检查工作区是否有未提交的变更
-    git('add', '.')
-    const uncommitted = git('status', '--porcelain')
+    git(workspacePath, 'add', '.')
+    const uncommitted = git(workspacePath, 'status', '--porcelain')
     const hasUncommitted = uncommitted.length > 0
     const uncommittedFiles = hasUncommitted
       ? uncommitted.split('\n').filter(Boolean)
       : []
 
     // 获取最近 100 条提交信息（含 hash 用于展示）
-    const logOutput = git('log', '--format=%h|%s', '-n', '100')
+    const logOutput = git(workspacePath, 'log', '--format=%h|%s', '-n', '100')
     const lines = logOutput.split('\n').filter(Boolean)
 
     // 统计连续的 [AI Checkpoint] 数量
@@ -99,12 +104,12 @@ export const aigSquash: Tool = {
     // 正式执行：
     // 1. 如果有 Checkpoint，软回滚抹掉碎片，保留所有代码变更（含刚才 add 的未提交文件）
     if (count > 0) {
-      git('reset', '--soft', `HEAD~${count}`)
+      git(workspacePath, 'reset', '--soft', `HEAD~${count}`)
     }
 
     // 2. 若无 Checkpoint 但有未提交文件，此时暂存区已有内容（git add . 已执行），直接提交即可
     const finalMsg = `✨ ${summary}`
-    git('commit', '-m', finalMsg)
+    git(workspacePath, 'commit', '-m', finalMsg)
 
     const parts: string[] = []
     if (count > 0)

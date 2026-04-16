@@ -1,5 +1,5 @@
 import type { CallToolResult, Tool } from '../types.js'
-import { git } from '../utils/git.js'
+import { git, resolveWorkspacePath } from '../utils/git.js'
 
 export const aigUndo: Tool = {
   definition: {
@@ -9,16 +9,22 @@ export const aigUndo: Tool = {
     inputSchema: {
       type: 'object',
       properties: {
+        workspacePath: {
+          type: 'string',
+          description: '项目根目录路径（建议绝对路径）',
+        },
         steps: {
           type: 'number',
           description:
             '回滚步数，默认为 1（撤销最近一次修改），填 2 则撤销最近两次，以此类推',
         },
       },
+      required: ['workspacePath'],
     },
   },
 
   async handler(args): Promise<CallToolResult> {
+    const workspacePath = resolveWorkspacePath(args)
     const { steps = 1 } = args as { steps?: number }
 
     if (!Number.isInteger(steps) || steps < 1 || steps > 20) {
@@ -33,7 +39,7 @@ export const aigUndo: Tool = {
       }
     }
 
-    git('reset', '--hard', `HEAD~${steps}`)
+    git(workspacePath, 'reset', '--hard', `HEAD~${steps}`)
 
     return {
       content: [

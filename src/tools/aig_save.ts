@@ -1,5 +1,5 @@
 import type { CallToolResult, Tool } from '../types.js'
-import { git } from '../utils/git.js'
+import { git, resolveWorkspacePath } from '../utils/git.js'
 
 export const aigSave: Tool = {
   definition: {
@@ -9,22 +9,27 @@ export const aigSave: Tool = {
     inputSchema: {
       type: 'object',
       properties: {
+        workspacePath: {
+          type: 'string',
+          description: '项目根目录路径（建议绝对路径）',
+        },
         message: {
           type: 'string',
           description: '存档备注，简述接下来要修改的内容',
         },
       },
-      required: ['message'],
+      required: ['workspacePath', 'message'],
     },
   },
 
   async handler(args): Promise<CallToolResult> {
+    const workspacePath = resolveWorkspacePath(args)
     const { message } = args as { message: string }
 
-    git('add', '.')
+    git(workspacePath, 'add', '.')
 
     // 空提交保护：暂存区无变更则跳过
-    const staged = git('status', '--porcelain')
+    const staged = git(workspacePath, 'status', '--porcelain')
     if (!staged) {
       return {
         content: [
@@ -38,7 +43,7 @@ export const aigSave: Tool = {
 
     const timestamp = new Date().toLocaleTimeString()
     const msg = `🤖 [AI Checkpoint] ${message} (${timestamp})`
-    git('commit', '-m', msg)
+    git(workspacePath, 'commit', '-m', msg)
 
     return {
       content: [{ type: 'text', text: `✅ 存档成功！记录: ${msg}` }],
