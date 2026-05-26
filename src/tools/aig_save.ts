@@ -35,18 +35,18 @@ export const aigSave: Tool = {
         content: [
           {
             type: 'text',
-            text: '⚠️ 工作区无任何变更，跳过本次存档，请先修改代码再存档。',
+            text: '工作区无任何变更，跳过本次存档，请先修改代码再存档。',
           },
         ],
       }
     }
 
     const timestamp = new Date().toLocaleTimeString()
-    const msg = `🤖 [AI Checkpoint] ${message} (${timestamp})`
+    const msg = `[AI Checkpoint] ${message} (${timestamp})`
     git(workspacePath, 'commit', '-m', msg)
 
     return {
-      content: [{ type: 'text', text: `✅ 存档成功！记录: ${msg}` }],
+      content: [{ type: 'text', text: `存档成功！记录: ${msg}` }],
     }
   },
 }

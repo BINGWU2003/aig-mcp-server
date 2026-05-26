@@ -68,7 +68,7 @@ export const aigSquash: Tool = {
         content: [
           {
             type: 'text',
-            text: '⚠️ 没有找到 AI Checkpoint，工作区也无未提交变更。当前 Git 历史已经很整洁了！',
+            text: '没有找到 AI Checkpoint，工作区也无未提交变更。当前 Git 历史已经很整洁了！',
           },
         ],
       }
@@ -77,19 +77,19 @@ export const aigSquash: Tool = {
     // 预览模式：展示将被合并的内容，不执行
     if (preview) {
       const previewLines: string[] = [
-        `🔍 预览：以下内容将被压缩合并为：`,
-        `   "✨ ${summary}"`,
+        `预览：以下内容将被压缩合并为：`,
+        `   "${summary}"`,
         '',
       ]
 
       if (checkpoints.length > 0) {
-        previewLines.push(`📦 ${count} 个 AI Checkpoint：`, ...checkpoints)
+        previewLines.push(`${count} 个 AI Checkpoint：`, ...checkpoints)
       }
 
       if (hasUncommitted) {
         previewLines.push(
           '',
-          `📝 ${uncommittedFiles.length} 个未提交变更（将一并纳入）：`,
+          `${uncommittedFiles.length} 个未提交变更（将一并纳入）：`,
           ...uncommittedFiles.map(f => `  ${f}`),
         )
       }
@@ -108,7 +108,7 @@ export const aigSquash: Tool = {
     }
 
     // 2. 若无 Checkpoint 但有未提交文件，此时暂存区已有内容（git add . 已执行），直接提交即可
-    const finalMsg = `✨ ${summary}`
+    const finalMsg = summary
     git(workspacePath, 'commit', '-m', finalMsg)
 
     const parts: string[] = []
@@ -121,7 +121,7 @@ export const aigSquash: Tool = {
       content: [
         {
           type: 'text',
-          text: `🎉 完美收官！已将 ${parts.join(' + ')} 合并为 1 个正式提交：\n"${finalMsg}"`,
+          text: `完美收官！已将 ${parts.join(' + ')} 合并为 1 个正式提交：\n"${finalMsg}"`,
         },
       ],
     }

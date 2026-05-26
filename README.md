@@ -6,12 +6,14 @@
 
 ## 工具一览
 
-| 工具         | 时机       | 作用                                    |
-| ------------ | ---------- | --------------------------------------- |
-| `aig_status` | 任意时刻   | 查看当前 Git 状态快照                   |
-| `aig_save`   | 每次修改前 | 创建 Git Checkpoint                     |
-| `aig_undo`   | 修改报错时 | 回滚到上一个 Checkpoint                 |
+
+| 工具           | 时机    | 作用                            |
+| ------------ | ----- | ----------------------------- |
+| `aig_status` | 任意时刻  | 查看当前 Git 状态快照                 |
+| `aig_save`   | 每次修改前 | 创建 Git Checkpoint             |
+| `aig_undo`   | 修改报错时 | 回滚到上一个 Checkpoint             |
 | `aig_squash` | 任务完成时 | 将碎片 Checkpoint 压缩为一个正式 Commit |
+
 
 ---
 
@@ -21,9 +23,11 @@
 
 在操作前调用，帮助 AI 了解当前 Git 状态，避免盲目操作。
 
-| 参数            | 类型   | 必填 | 说明                          |
-| --------------- | ------ | ---- | ----------------------------- |
-| `workspacePath` | string | ✅   | 项目根目录路径（建议绝对路径） |
+
+| 参数              | 类型     | 必填  | 说明              |
+| --------------- | ------ | --- | --------------- |
+| `workspacePath` | string | 是   | 项目根目录路径（建议绝对路径） |
+
 
 **返回内容：** 当前分支、未提交文件列表、待合并 Checkpoint 数量、最近 5 条提交记录。
 
@@ -33,14 +37,16 @@
 
 在每一步修改代码**前**调用，创建可回溯的 Checkpoint。
 
-| 参数            | 类型   | 必填 | 说明                          |
-| --------------- | ------ | ---- | ----------------------------- |
-| `workspacePath` | string | ✅   | 项目根目录路径（建议绝对路径） |
-| `message`       | string | ✅   | 简述接下来要修改的内容         |
+
+| 参数              | 类型     | 必填  | 说明              |
+| --------------- | ------ | --- | --------------- |
+| `workspacePath` | string | 是   | 项目根目录路径（建议绝对路径） |
+| `message`       | string | 是   | 简述接下来要修改的内容     |
+
 
 ```
-✅ 存档成功！记录: 🤖 [AI Checkpoint] 重构登录逻辑 (10:30:00)
-⚠️ 工作区无任何变更，跳过本次存档。   ← 空提交保护
+存档成功！记录: [AI Checkpoint] 重构登录逻辑 (10:30:00)
+工作区无任何变更，跳过本次存档。   ← 空提交保护
 ```
 
 ---
@@ -49,13 +55,15 @@
 
 代码修改失败或需要撤销时调用，支持多步回滚。
 
-| 参数            | 类型   | 必填 | 说明                          |
-| --------------- | ------ | ---- | ----------------------------- |
-| `workspacePath` | string | ✅   | 项目根目录路径（建议绝对路径） |
-| `steps`         | number | ❌   | 回滚步数，默认 1，最大 20      |
+
+| 参数              | 类型     | 必填  | 说明              |
+| --------------- | ------ | --- | --------------- |
+| `workspacePath` | string | 是   | 项目根目录路径（建议绝对路径） |
+| `steps`         | number | 否   | 回滚步数，默认 1，最大 20 |
+
 
 ```
-⏪ 已回滚 2 步！所有相关修改已撤销。
+已回滚 2 步！所有相关修改已撤销。
 ```
 
 ---
@@ -66,23 +74,25 @@
 
 **建议先用 `preview: true` 确认，再正式执行。**
 
-| 参数            | 类型    | 必填 | 说明                                   |
-| --------------- | ------- | ---- | -------------------------------------- |
-| `workspacePath` | string  | ✅   | 项目根目录路径（建议绝对路径）          |
-| `summary`       | string  | ✅   | 正式提交总结，如：`feat: 重构登录模块` |
-| `preview`       | boolean | ❌   | `true` 仅预览不执行，默认 `false`      |
+
+| 参数              | 类型      | 必填  | 说明                       |
+| --------------- | ------- | --- | ------------------------ |
+| `workspacePath` | string  | 是   | 项目根目录路径（建议绝对路径）          |
+| `summary`       | string  | 是   | 正式提交总结，如：`feat: 重构登录模块`  |
+| `preview`       | boolean | 否   | `true` 仅预览不执行，默认 `false` |
+
 
 ```
 # preview: true
-🔍 预览：以下 3 个 AI Checkpoint 将被压缩合并为：
-   "✨ feat: 拆分 Vue 组件并增加 TS 类型"
-  1. a1b2c3d 🤖 [AI Checkpoint] 拆分组件
-  2. d4e5f6a 🤖 [AI Checkpoint] 增加 TS 类型
-  3. 7g8h9i0 🤖 [AI Checkpoint] 调整样式
+预览：以下 3 个 AI Checkpoint 将被压缩合并为：
+   "feat: 拆分 Vue 组件并增加 TS 类型"
+  1. a1b2c3d [AI Checkpoint] 拆分组件
+  2. d4e5f6a [AI Checkpoint] 增加 TS 类型
+  3. 7g8h9i0 [AI Checkpoint] 调整样式
 
 # preview: false（正式执行）
-🎉 完美收官！已将 3 个 AI 碎片存档压缩合并为 1 个正式提交：
-"✨ feat: 拆分 Vue 组件并增加 TS 类型"
+完美收官！已将 3 个 AI 碎片存档压缩合并为 1 个正式提交：
+"feat: 拆分 Vue 组件并增加 TS 类型"
 ```
 
 ---
@@ -147,7 +157,7 @@
   → AI: aig_squash(workspacePath="D:\\code\\your-project", summary="feat: 拆分组件并增加 TS 类型", preview=true)
   ← AI 展示预览，等你确认
   → AI: aig_squash(workspacePath="D:\\code\\your-project", summary="feat: 拆分组件并增加 TS 类型", preview=false)
-  ← 3 个碎片 Checkpoint 压缩为 1 个整洁 Commit ✨
+  ← 3 个碎片 Checkpoint 压缩为 1 个整洁 Commit
 ```
 
 ---
@@ -158,6 +168,18 @@
 pnpm install
 pnpm dev      # watch 模式
 pnpm build    # 构建 → dist/index.js
+```
+
+## 发布到 npm
+
+```bash
+npm version patch   # 更新补丁版本，可按需替换为 minor 或 major
+npm version minor
+npm version major
+pnpm build
+npm login
+npm publish --access public
+pnpm release
 ```
 
 ## License

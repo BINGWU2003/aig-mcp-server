@@ -29,8 +29,8 @@ export const aigStatus: Tool = {
     const changedFiles = statusRaw ? statusRaw.split('\n').filter(Boolean) : []
     const workingTreeStatus
       = changedFiles.length === 0
-        ? '✅ 工作区干净，无未提交变更'
-        : `⚠️ 有 ${changedFiles.length} 个文件未提交：\n${changedFiles.map(f => `  ${f}`).join('\n')}`
+        ? '工作区干净，无未提交变更'
+        : `有 ${changedFiles.length} 个文件未提交：\n${changedFiles.map(f => `  ${f}`).join('\n')}`
 
     // 统计连续 AI Checkpoint 数量
     const logOutput = git(workspacePath, 'log', '--format=%s', '-n', '100')
@@ -44,8 +44,8 @@ export const aigStatus: Tool = {
 
     const checkpointStatus
       = checkpointCount === 0
-        ? '✅ 无待合并的 AI Checkpoint'
-        : `📦 有 ${checkpointCount} 个连续 AI Checkpoint 待合并（可调用 aig_squash 压缩）`
+        ? '无待合并的 AI Checkpoint'
+        : `有 ${checkpointCount} 个连续 AI Checkpoint 待合并（可调用 aig_squash 压缩）`
 
     // 最近 5 条提交
     const recentLog = git(workspacePath, 'log', '--format=%h %s', '-n', '5')
@@ -56,13 +56,13 @@ export const aigStatus: Tool = {
       .join('\n')
 
     const report = [
-      `🌿 当前分支：${branch}`,
+      `当前分支：${branch}`,
       '',
       workingTreeStatus,
       '',
       checkpointStatus,
       '',
-      '📋 最近提交记录：',
+      '最近提交记录：',
       recentCommits || '  （暂无提交）',
     ].join('\n')
 

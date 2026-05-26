@@ -32,7 +32,7 @@ export const aigUndo: Tool = {
         content: [
           {
             type: 'text',
-            text: '❌ steps 参数无效，请传入 1~20 之间的整数。',
+            text: 'steps 参数无效，请传入 1~20 之间的整数。',
           },
         ],
         isError: true,
@@ -45,7 +45,7 @@ export const aigUndo: Tool = {
       content: [
         {
           type: 'text',
-          text: `⏪ 已回滚 ${steps} 步！所有相关修改已撤销。`,
+          text: `已回滚 ${steps} 步！所有相关修改已撤销。`,
         },
       ],
     }
