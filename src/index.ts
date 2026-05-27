@@ -1,10 +1,7 @@
-import type { Tool } from './types.js'
-import { Server } from '@modelcontextprotocol/sdk/server/index.js'
+import type { Tool, ToolDefinition } from './types.js'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js'
+import { z } from 'zod'
 import { aigSave } from './tools/aig_save.js'
 import { aigSquash } from './tools/aig_squash.js'
 import { aigStatus } from './tools/aig_status.js'
@@ -13,41 +10,76 @@ import { assertGitRepo, resolveWorkspacePath } from './utils/git.js'
 
 // 注册所有工具
 const tools: Tool[] = [aigStatus, aigSave, aigUndo, aigSquash]
-const toolMap = new Map(tools.map(t => [t.definition.name, t]))
 
-const server = new Server(
-  { name: 'aig-mcp-server', version: '1.3.0' },
+const server = new McpServer(
+  { name: 'aig-mcp-server', version: '1.4.1' },
   { capabilities: { tools: {} } },
 )
 
-// 列举工具
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: tools.map(t => t.definition),
-}))
+interface JsonSchemaProperty {
+  type?: unknown
+  description?: unknown
+}
 
-// 路由工具调用
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params
+function propertyToZod(property: unknown): z.ZodType {
+  const { type, description } = (property ?? {}) as JsonSchemaProperty
 
-  try {
-    const tool = toolMap.get(name)
-    if (!tool)
-      throw new Error(`未知的工具调用: ${name}`)
-
-    const toolArgs = (args ?? {}) as Record<string, unknown>
-    const workspacePath = resolveWorkspacePath(toolArgs)
-    assertGitRepo(workspacePath)
-
-    return await tool.handler(toolArgs)
+  let schema: z.ZodType
+  switch (type) {
+    case 'boolean':
+      schema = z.boolean()
+      break
+    case 'number':
+      schema = z.number()
+      break
+    case 'string':
+    default:
+      schema = z.string()
+      break
   }
-  catch (error) {
-    const errMsg = error instanceof Error ? error.message : String(error)
-    return {
-      content: [{ type: 'text' as const, text: `❌ 失败: ${errMsg}` }],
-      isError: true,
-    }
+
+  return typeof description === 'string' ? schema.describe(description) : schema
+}
+
+function createInputSchema(definition: ToolDefinition): Record<string, z.ZodType> {
+  const { properties, required = [] } = definition.inputSchema
+  const requiredFields = new Set(required)
+  const shape: Record<string, z.ZodType> = {}
+
+  for (const [name, property] of Object.entries(properties)) {
+    const schema = propertyToZod(property)
+    shape[name] = requiredFields.has(name) ? schema : schema.optional()
   }
-})
+
+  return shape
+}
+
+for (const tool of tools) {
+  const { definition } = tool
+  server.registerTool(
+    definition.name,
+    {
+      description: definition.description,
+      inputSchema: createInputSchema(definition),
+    },
+    async (args) => {
+      try {
+        const toolArgs = (args ?? {}) as Record<string, unknown>
+        const workspacePath = resolveWorkspacePath(toolArgs)
+        assertGitRepo(workspacePath)
+
+        return await tool.handler(toolArgs)
+      }
+      catch (error) {
+        const errMsg = error instanceof Error ? error.message : String(error)
+        return {
+          content: [{ type: 'text' as const, text: `❌ 失败: ${errMsg}` }],
+          isError: true,
+        }
+      }
+    },
+  )
+}
 
 async function main(): Promise<void> {
   const transport = new StdioServerTransport()
